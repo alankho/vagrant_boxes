@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+set -e
+set -x
+
+function config_hosts(){
+  echo "Configuring /etc/hosts ..."
+  echo "192.168.200.100 mongodb.local database"   >> /etc/hosts
+}
+
+function update_repo(){
+  echo "Install MongoDB Community"
+  apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
+  echo "deb [ arch=amd64 ] http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.4.list
+  echo "Update Repositoryies"
+  apt-get update -y
+}
+
+function install_mongod(){
+  echo "Install MongoDB Community"
+  apt-get install -y mongodb-org
+  sh -c "killall mongod; true"
+  echo "Set LC_ALL=C to .profile"
+  echo "export LC_ALL=C" >> /home/vagrant/.profile
+}
+
+function config(){
+  # disable THP
+  echo -e "never" > /sys/kernel/mm/transparent_hugepage/enabled
+  echo -e "never" > /sys/kernel/mm/transparent_hugepage/defrag
+  # disable mongod upstart service
+  echo 'manual' | tee /etc/init/mongod.override
+}
+
+config_hosts
+update_repo
+install_mongod
+config
+echo "DONE"
